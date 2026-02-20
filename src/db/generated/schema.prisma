@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/db/generated"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id               String            @id @default(uuid())
+  name             String
+  telegramId       String            @unique
+  chatId           String
+  createdAt        DateTime          @default(now())
+  events           Event[]
+  featureSnapshots FeatureSnapshot[]
+  integrations     Integration[]
+  riskScores       RiskScore[]
+}
+
+model Integration {
+  id             String    @id @default(uuid())
+  userId         String
+  provider       Provider
+  providerUserId String
+  accessToken    String
+  refreshToken   String?
+  expiresAt      DateTime?
+  createdAt      DateTime  @default(now())
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([provider])
+}
+
+model Event {
+  id         String   @id @default(uuid())
+  userId     String
+  provider   Provider
+  eventType  String
+  externalId String
+  occurredAt DateTime
+  metadata   Json
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([provider])
+  @@index([occurredAt])
+}
+
+model FeatureSnapshot {
+  id                 String   @id @default(uuid())
+  userId             String
+  meetingHours       Float
+  taskBacklog        Int
+  afterHoursActivity Boolean
+  completionRatio    Float
+  contextSwitchScore Float
+  createdAt          DateTime @default(now())
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model RiskScore {
+  id              String    @id @default(uuid())
+  userId          String
+  riskProbability Float
+  riskLevel       RiskLevel
+  createdAt       DateTime  @default(now())
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+enum Provider {
+  google_calendar
+  google_tasks
+  github
+  jira
+  slack
+}
+
+enum RiskLevel {
+  LOW
+  MODERATE
+  HIGH
+}
