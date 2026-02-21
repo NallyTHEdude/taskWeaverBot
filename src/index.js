@@ -1,7 +1,7 @@
 import app from './app.js';
 import { PORT } from './config/index.js';
 import { connectDB } from './db/index.js';
-import { logger } from './utils/logger.js';
+import { logger } from './utils/index.js';
 
 //Connect database
 connectDB();
