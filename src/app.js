@@ -27,7 +27,7 @@ import telegramRouter from './routes/telegram.routes.js';
 
 // routes
 app.use('/api/v1/health', healthCheckRouter);
-app.use('api/v1/auth', oauth2Router);
+app.use('/api/v1/auth', oauth2Router);
 app.use('/', telegramRouter);
 
 app.get('/', (req, res) => {
