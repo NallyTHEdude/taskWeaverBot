@@ -1,6 +1,5 @@
 import { axiosInstance } from './lib/axios.js';
-import { ApiError } from '../utils/ApiError.js';
-import { logger } from '../utils/logger.js';
+import { logger, ApiError } from '../utils/index.js';
 
 const botApi = axiosInstance();
 
