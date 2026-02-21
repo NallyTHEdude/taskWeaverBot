@@ -1,6 +1,5 @@
 import axios from 'axios';
-import { ApiError } from '../../utils/ApiError.js';
-import { logger } from '../../utils/logger.js';
+import { ApiError, logger } from '../../utils/index.js';
 import { TELEGRAM_BOT_TOKEN } from '../../config/index.js';
 
 const BASE_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
