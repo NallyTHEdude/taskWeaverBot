@@ -26,8 +26,8 @@ import telegramRouter from './routes/telegram.routes.js';
 
 // routes
 app.use('/api/v1/health', healthCheckRouter);
-app.post('/', telegramRouter);
 
+app.use('/', telegramRouter);
 app.get('/', (req, res) => {
     res.send('Welcome to Task Weaver API');
 });
