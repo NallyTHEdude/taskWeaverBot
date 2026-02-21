@@ -23,7 +23,7 @@ model Integration {
   id             String    @id @default(uuid())
   userId         String
   provider       Provider
-  providerUserId String
+  // providerUserId String
   accessToken    String
   refreshToken   String?
   expiresAt      DateTime?
@@ -32,6 +32,7 @@ model Integration {
 
   @@index([userId])
   @@index([provider])
+  @@unique([userId, provider])
 }
 
 model Event {
@@ -78,8 +79,8 @@ model RiskScore {
 }
 
 enum Provider {
-  google_calendar
-  google_tasks
+  google
+  microsoft
   github
   jira
   slack
