@@ -20,16 +20,17 @@ model User {
 }
 
 model Integration {
-  id             String    @id @default(uuid())
-  userId         String
-  provider       Provider
-  providerUserId String
-  accessToken    String
-  refreshToken   String?
-  expiresAt      DateTime?
-  createdAt      DateTime  @default(now())
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String    @id @default(uuid())
+  userId       String
+  provider     Provider
+  // providerUserId String
+  accessToken  String
+  refreshToken String?
+  expiresAt    DateTime?
+  createdAt    DateTime  @default(now())
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, provider])
   @@index([userId])
   @@index([provider])
 }
@@ -78,8 +79,8 @@ model RiskScore {
 }
 
 enum Provider {
-  google_calendar
-  google_tasks
+  google
+  microsoft
   github
   jira
   slack
