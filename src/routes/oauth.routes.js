@@ -1,10 +1,19 @@
 import {Router} from 'express';
-import {oAuthControllers} from '../controllers/oauth.controller.js'; // just dummy controllers for now, we will implement the actual logic later
+import { 
+    getGoogleAuthUrl, googleCallback,
+    getGithubAuthUrl, githubCallback,
+    getMicrosoftAuthUrl, microsoftCallback
+} from '../controllers/oauth.controller.js';
 
 const router = Router();
+// ---------- Authorization URL Routes ----------
+router.get('/google', getGoogleAuthUrl);
+router.get('/github', getGithubAuthUrl);
+router.get('/microsoft', getMicrosoftAuthUrl);
 
-// this is just placeholder for now, we will implement the actual logic later
-router.post('/oauth2/token', oAuthControllers.token);
-router.get('/oauth2/authorize', oAuthControllers.authorize);
+// ---------- Callback Routes ----------
+router.get('/google/callback', googleCallback);
+router.get('/github/callback', githubCallback);
+router.get('/microsoft/callback', microsoftCallback);
 
 export default router;
