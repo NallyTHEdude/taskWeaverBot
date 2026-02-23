@@ -50,8 +50,9 @@ const handleConnectCommand = async (messageObj) => {
     try {
         // call url to get auth url's
         const getGoogleUrl = `${BASE_API_URL}/api/v1/auth/google?telegramId=${messageObj.chat.id}`;
+        const getGithubUrl = `${BASE_API_URL}/api/v1/auth/github?telegramId=${messageObj.chat.id}`;
 
-        // make parallel requests to get all auth urls
+        // TODO: make parallel requests to get all auth urls
         // const [googleResponse, githubResponse, microsoftResponse] =
         // await Promise.all([
         //     axios.get(getGoogleUrl),
@@ -59,11 +60,11 @@ const handleConnectCommand = async (messageObj) => {
         //     axios.get(microsoftUrl),
         // ]);
         const googleResponse = await axios.get(getGoogleUrl);
-
+        const githubResponse = await axios.get(getGithubUrl);
 
         // extract urls from responses
         const googleUrl = googleResponse?.data?.data?.url;
-
+        const githubUrl = githubResponse?.data?.data?.url;
 
         // handle url errors
         if (!googleUrl) {
@@ -73,11 +74,19 @@ const handleConnectCommand = async (messageObj) => {
                 'Failed to retrieve Google authentication URL. Please try again later.',
             );
         }
+        if (!githubUrl) {
+            logger.error('Invalid GitHub auth response:', githubResponse.data);
+            return sendMessage(
+                messageObj,
+                'Failed to retrieve GitHub authentication URL. Please try again later.',
+            );
+        }
 
         // send message with auth urls
         return sendMessage(
             messageObj,
-            `Google: <a href="${googleUrl}">Google link</a>\n`,
+            `Google: <a href="${googleUrl}">Google link</a>\n` +
+            `GitHub: <a href="${githubUrl}">GitHub link</a>`,
             'HTML',
         );
     } catch (error) {

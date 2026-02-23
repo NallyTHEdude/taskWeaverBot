@@ -39,15 +39,25 @@ const getGoogleAuthUrl = asyncHandler(async (req, res) => {
 
 // TODO: check and update github
 const getGithubAuthUrl = asyncHandler(async (req, res) => {
-    const state = crypto.randomBytes(16).toString("hex");
+    const { telegramId } = req.query;
+
+    if (!telegramId) {
+        throw new ApiError(400, 'Missing required query parameter: telegramId');
+    }
+
+    const state = JSON.stringify({
+        telegramId,
+        nonce: crypto.randomBytes(8).toString("hex")
+    });
+
     const githubAuthorizationUrl = githubOAuthClient.authorizeURL({
         redirect_uri: `${BASE_API_URL}/api/v1/auth/github/callback`,
-        scope: 'read:user user:email',
+        scope: 'read:user user:email repo',
         state: state
     });
+
     return res.json(new ApiResponse(200, { url: githubAuthorizationUrl }));
 });
-
 // TODO: check and update microsoft
 const getMicrosoftAuthUrl = asyncHandler(async (req, res) => {
     const state = crypto.randomBytes(16).toString("hex");
@@ -118,7 +128,6 @@ const googleCallback = asyncHandler(async (req, res) => {
     }
 });
 
-// TODO: check and update github CALLBACK
 const githubCallback = asyncHandler(async (req, res) => {
     const { code, state } = req.query;
 
@@ -126,8 +135,17 @@ const githubCallback = asyncHandler(async (req, res) => {
         throw new ApiError(400, 'Authorization code is missing');
     }
 
+    if (!state) {
+        throw new ApiError(400, 'State is missing');
+    }
+
+    const parsedState = JSON.parse(state);
+    const { telegramId } = parsedState;
+
+    logger.info("telegram id is:", telegramId);
+
     const user = await prisma.user.findUnique({
-        where: { telegramId: state },
+        where: { telegramId },
     });
 
     if (!user) {
@@ -146,29 +164,43 @@ const githubCallback = asyncHandler(async (req, res) => {
             where: {
                 userId_provider: {
                     userId: user.id,
-                    provider: 'github',
+                    provider: IntegrationProvidersEnum.GITHUB,
                 },
             },
             update: {
                 accessToken: accessToken.token.access_token,
-                refreshToken: accessToken.token.refresh_token,
-                expiresAt: new Date(accessToken.token.expires_at),
+                refreshToken: accessToken.token.refresh_token || null,
+                expiresAt: accessToken.token.expires_at
+                    ? new Date(accessToken.token.expires_at)
+                    : null,
             },
             create: {
                 userId: user.id,
-                provider: 'github',
+                provider: IntegrationProvidersEnum.GITHUB,
                 accessToken: accessToken.token.access_token,
-                refreshToken: accessToken.token.refresh_token,
-                expiresAt: new Date(accessToken.token.expires_at),
+                refreshToken: accessToken.token.refresh_token || null,
+                expiresAt: accessToken.token.expires_at
+                    ? new Date(accessToken.token.expires_at)
+                    : null,
             },
         });
 
-        return res.json(new ApiResponse(200, { message: 'GitHub OAuth successful' }));
+        return res.json(
+            new ApiResponse(200, { message: 'GitHub OAuth successful' })
+        );
     } catch (error) {
-        throw new ApiError(500, 'Failed to exchange authorization code for tokens', [error.message]);
+        logger.error('Error exchanging GitHub authorization code for tokens', {
+            error: error.message,
+            stack: error.stack,
+        });
+
+        throw new ApiError(
+            500,
+            'Failed to exchange authorization code for tokens',
+            [error.message]
+        );
     }
 });
-
 // TODO: check and update microsoft CALLBACK
 const microsoftCallback = asyncHandler(async (req, res) => {
     const { code, state } = req.query;
