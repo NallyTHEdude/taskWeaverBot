@@ -26,9 +26,10 @@ const getGoogleAuthUrl = asyncHandler(async (req, res) => {
             'openid',
             'email',
             'profile',
-            'https://www.googleapis.com/auth/calendar.readonly',
-            'https://www.googleapis.com/auth/spreadsheets.readonly',
-            'https://www.googleapis.com/auth/tasks.readonly'
+            'https://www.googleapis.com/auth/calendar', // Google Calendar
+            'https://www.googleapis.com/auth/spreadsheets.readonly', // Sheets 
+            'https://www.googleapis.com/auth/tasks', // Google Tasks
+            'https://www.googleapis.com/auth/drive.readonly' // Docs + Colab via Drive
         ].join(' '),
         access_type: 'offline',
         prompt: 'consent',
@@ -37,7 +38,6 @@ const getGoogleAuthUrl = asyncHandler(async (req, res) => {
     return res.json(new ApiResponse(200, { url: googleAuthorizationUrl }));
 });
 
-// TODO: check and update github
 const getGithubAuthUrl = asyncHandler(async (req, res) => {
     const { telegramId } = req.query;
 
