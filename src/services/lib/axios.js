@@ -28,7 +28,11 @@ export function axiosInstance() {
                     baseURL: BASE_URL,
                 })
                 .catch((error) => {
-                    logger.error('Error during POST request:', error.message);
+                    logger.error('Error during POST request:', {
+                        message: error.message,
+                        response: error.response?.data,
+                        status: error.response?.status,
+                    });
                     throw new ApiError(
                         error.response?.status || 500,
                         error.response?.data?.description ||
