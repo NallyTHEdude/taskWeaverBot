@@ -50,8 +50,6 @@ const handleConnectCommand = async (messageObj) => {
     try {
         // call url to get auth url's
         const getGoogleUrl = `${BASE_API_URL}/api/v1/auth/google?telegramId=${messageObj.chat.id}`;
-        const githubUrl = `${BASE_API_URL}/api/v1/auth/github?telegramId=${messageObj.chat.id}`;
-        const microsoftUrl = `${BASE_API_URL}/api/v1/auth/microsoft?telegramId=${messageObj.chat.id}`;
 
         // make parallel requests to get all auth urls
         // const [googleResponse, githubResponse, microsoftResponse] =
@@ -61,13 +59,11 @@ const handleConnectCommand = async (messageObj) => {
         //     axios.get(microsoftUrl),
         // ]);
         const googleResponse = await axios.get(getGoogleUrl);
-        const githubResponse = await axios.get(githubUrl);
-        const microsoftResponse = await axios.get(microsoftUrl);
+
 
         // extract urls from responses
         const googleUrl = googleResponse?.data?.data?.url;
-        const githubAuthUrl = githubResponse?.data?.data?.url;
-        const microsoftAuthUrl = microsoftResponse?.data?.data?.url;
+
 
         // handle url errors
         if (!googleUrl) {
@@ -77,30 +73,11 @@ const handleConnectCommand = async (messageObj) => {
                 'Failed to retrieve Google authentication URL. Please try again later.',
             );
         }
-        if (!githubAuthUrl) {
-            logger.error('Invalid Github auth response:', githubResponse.data);
-            return sendMessage(
-                messageObj,
-                'Failed to retrieve Github authentication URL. Please try again later.',
-            );
-        }
-        if (!microsoftAuthUrl) {
-            logger.error(
-                'Invalid Microsoft auth response:',
-                microsoftResponse.data,
-            );
-            return sendMessage(
-                messageObj,
-                'Failed to retrieve Microsoft authentication URL. Please try again later.',
-            );
-        }
 
         // send message with auth urls
         return sendMessage(
             messageObj,
-            `Google: <a href="${googleUrl}">Google link</a>\n` +
-                `GitHub: <a href="${githubAuthUrl}">GitHub link</a>\n` +
-                `Microsoft: <a href="${microsoftAuthUrl}">Microsoft link</a>`,
+            `Google: <a href="${googleUrl}">Google link</a>\n`,
             'HTML',
         );
     } catch (error) {
@@ -132,7 +109,7 @@ async function handleMessage(messageObj) {
                     'Hello! How can I assist you today?',
                 );
             case 'connect':
-                return await handleConnectCommand(messageObj);
+                return handleConnectCommand(messageObj);
             default:
                 return sendMessage(
                     messageObj,
