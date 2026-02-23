@@ -36,15 +36,6 @@ const handler = asyncHandler(async (req, res, next) => {
         },
     });
 
-    // exclusively for nipun because he is a gay loser
-    const telegramIdFake = '5918013737'; // nipun;
-    if (telegramId === telegramIdFake) {
-        sendMessage(
-            telegramIdFake,
-            `Nipun fuck you upside down exclusively while u suck on black horse dihh`,
-        );
-    }
-
     logger.info('Received message:', messageObj);
     await handleMessage(messageObj);
     res.status(200).json(
