@@ -2,6 +2,9 @@ import sendMessage, { handleMessage } from '../services/telegram.service.js';
 import { asyncHandler, ApiError, ApiResponse, logger } from '../utils/index.js';
 import { prisma } from '../db/index.js';
 
+// TODO: REMOVE THIS AND STORE IN REDIS WITH TTL
+const processedMessages = new Set();
+
 const handler = asyncHandler(async (req, res, next) => {
     const { body } = req;
     if (!body) {
@@ -18,6 +21,16 @@ const handler = asyncHandler(async (req, res, next) => {
             'Message object is missing in the request body',
         );
     }
+
+    // TODO: Store processed message IDs in Redis with TTL
+    // Deduplication: Skip processing if message_id has already been handled
+    if (processedMessages.has(messageObj.message_id)) {
+        logger.info(`Message with ID ${messageObj.message_id} already processed. Skipping.`);
+        return res.status(200).json(
+            new ApiResponse(200, null, 'Message already processed'),
+        );
+    }
+    processedMessages.add(messageObj.message_id);
 
     // update user if name or chatId is changed, otherwise create new user
     const telegramId = messageObj.from.id.toString();
