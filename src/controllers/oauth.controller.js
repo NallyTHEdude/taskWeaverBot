@@ -1,12 +1,12 @@
-import crypto from "crypto";
+import crypto from 'crypto';
 import { BASE_API_URL } from '../config/index.js';
 import { asyncHandler, ApiResponse, ApiError, logger } from '../utils/index.js';
-import { IntegrationProvidersEnum } from "../utils/constants.js";
+import { IntegrationProvidersEnum } from '../utils/constants.js';
 import { prisma } from '../db/index.js';
 import {
     googleOAuthClient,
     githubOAuthClient,
-} from "../services/oauth.service.js";
+} from '../services/oauth.service.js';
 
 // ---------- OAuth Authorization URL Controllers ----------
 const getGoogleAuthUrl = asyncHandler(async (req, res) => {
@@ -17,7 +17,7 @@ const getGoogleAuthUrl = asyncHandler(async (req, res) => {
 
     const state = JSON.stringify({
         telegramId,
-        nonce: crypto.randomBytes(8).toString("hex")
+        nonce: crypto.randomBytes(8).toString('hex'),
     });
     const googleAuthorizationUrl = googleOAuthClient.authorizeURL({
         redirect_uri: `${BASE_API_URL}/api/v1/auth/google/callback`,
@@ -26,13 +26,13 @@ const getGoogleAuthUrl = asyncHandler(async (req, res) => {
             'email',
             'profile',
             'https://www.googleapis.com/auth/calendar', // Google Calendar
-            'https://www.googleapis.com/auth/spreadsheets.readonly', // Sheets 
+            'https://www.googleapis.com/auth/spreadsheets.readonly', // Sheets
             'https://www.googleapis.com/auth/tasks', // Google Tasks
-            'https://www.googleapis.com/auth/drive.readonly' // Docs + Colab via Drive
+            'https://www.googleapis.com/auth/drive.readonly', // Docs + Colab via Drive
         ].join(' '),
         access_type: 'offline',
         prompt: 'consent',
-        state: state
+        state: state,
     });
     return res.json(new ApiResponse(200, { url: googleAuthorizationUrl }));
 });
@@ -46,20 +46,19 @@ const getGithubAuthUrl = asyncHandler(async (req, res) => {
 
     const state = JSON.stringify({
         telegramId,
-        nonce: crypto.randomBytes(8).toString("hex")
+        nonce: crypto.randomBytes(8).toString('hex'),
     });
 
     const githubAuthorizationUrl = githubOAuthClient.authorizeURL({
         redirect_uri: `${BASE_API_URL}/api/v1/auth/github/callback`,
         scope: 'read:user user:email repo',
-        state: state
+        state: state,
     });
 
     return res.json(new ApiResponse(200, { url: githubAuthorizationUrl }));
 });
 
-
-// ---------- Callback Controllers ----------   
+// ---------- Callback Controllers ----------
 const googleCallback = asyncHandler(async (req, res) => {
     const { code, state } = req.query;
 
@@ -69,7 +68,7 @@ const googleCallback = asyncHandler(async (req, res) => {
 
     const parsedState = JSON.parse(state);
     const { telegramId } = parsedState;
-    logger.info("telegram id is: " , telegramId);
+    logger.info('telegram id is: ', telegramId);
     const user = await prisma.user.findUnique({
         where: { telegramId },
     });
@@ -107,13 +106,19 @@ const googleCallback = asyncHandler(async (req, res) => {
             },
         });
 
-        return res.json(new ApiResponse(200, { message: 'Google OAuth successful' }));
+        return res.json(
+            new ApiResponse(200, { message: 'Google OAuth successful' }),
+        );
     } catch (error) {
         logger.error('Error exchanging authorization code for tokens', {
             error: error.message,
             stack: error.stack,
         });
-        throw new ApiError(500, 'Failed to exchange authorization code for tokens', [error.message]);
+        throw new ApiError(
+            500,
+            'Failed to exchange authorization code for tokens',
+            [error.message],
+        );
     }
 });
 
@@ -131,7 +136,7 @@ const githubCallback = asyncHandler(async (req, res) => {
     const parsedState = JSON.parse(state);
     const { telegramId } = parsedState;
 
-    logger.info("telegram id is:", telegramId);
+    logger.info('telegram id is:', telegramId);
 
     const user = await prisma.user.findUnique({
         where: { telegramId },
@@ -175,7 +180,7 @@ const githubCallback = asyncHandler(async (req, res) => {
         });
 
         return res.json(
-            new ApiResponse(200, { message: 'GitHub OAuth successful' })
+            new ApiResponse(200, { message: 'GitHub OAuth successful' }),
         );
     } catch (error) {
         logger.error('Error exchanging GitHub authorization code for tokens', {
@@ -186,16 +191,9 @@ const githubCallback = asyncHandler(async (req, res) => {
         throw new ApiError(
             500,
             'Failed to exchange authorization code for tokens',
-            [error.message]
+            [error.message],
         );
     }
 });
 
-
-export {
-    getGoogleAuthUrl,
-    getGithubAuthUrl,
-
-    googleCallback,
-    githubCallback,
-}
+export { getGoogleAuthUrl, getGithubAuthUrl, googleCallback, githubCallback };

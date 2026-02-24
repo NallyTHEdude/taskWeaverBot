@@ -86,7 +86,7 @@ const handleConnectCommand = async (messageObj) => {
         return sendMessage(
             messageObj,
             `Google: <a href="${googleUrl}">Google link</a>\n` +
-            `GitHub: <a href="${githubUrl}">GitHub link</a>`,
+                `GitHub: <a href="${githubUrl}">GitHub link</a>`,
             'HTML',
         );
     } catch (error) {

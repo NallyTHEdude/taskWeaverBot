@@ -3,6 +3,8 @@ export const IntegrationProvidersEnum = {
     MICROSOFT: 'microsoft',
     GITHUB: 'github',
     JIRA: 'jira',
-    SLACK: 'slack'
+    SLACK: 'slack',
 };
-export const AvailableIntegrationProviders = Object.values(IntegrationProvidersEnum);
+export const AvailableIntegrationProviders = Object.values(
+    IntegrationProvidersEnum,
+);

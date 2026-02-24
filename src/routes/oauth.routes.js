@@ -1,7 +1,9 @@
-import {Router} from 'express';
-import { 
-    getGoogleAuthUrl, googleCallback,
-    getGithubAuthUrl, githubCallback,
+import { Router } from 'express';
+import {
+    getGoogleAuthUrl,
+    googleCallback,
+    getGithubAuthUrl,
+    githubCallback,
 } from '../controllers/oauth.controller.js';
 
 const router = Router();
