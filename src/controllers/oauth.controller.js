@@ -6,7 +6,6 @@ import { prisma } from '../db/index.js';
 import {
     googleOAuthClient,
     githubOAuthClient,
-    microsoftOAuthClient
 } from "../services/oauth.service.js";
 
 // ---------- OAuth Authorization URL Controllers ----------
@@ -57,16 +56,6 @@ const getGithubAuthUrl = asyncHandler(async (req, res) => {
     });
 
     return res.json(new ApiResponse(200, { url: githubAuthorizationUrl }));
-});
-// TODO: check and update microsoft
-const getMicrosoftAuthUrl = asyncHandler(async (req, res) => {
-    const state = crypto.randomBytes(16).toString("hex");
-    const microsoftAuthorizationUrl = microsoftOAuthClient.authorizeURL({
-        redirect_uri: `${BASE_API_URL}/api/v1/auth/microsoft/callback`,
-        scope: 'openid email profile',
-        state: state
-    });
-    return res.json(new ApiResponse(200, { url: microsoftAuthorizationUrl }));
 });
 
 
@@ -201,63 +190,12 @@ const githubCallback = asyncHandler(async (req, res) => {
         );
     }
 });
-// TODO: check and update microsoft CALLBACK
-const microsoftCallback = asyncHandler(async (req, res) => {
-    const { code, state } = req.query;
 
-    if (!code) {
-        throw new ApiError(400, 'Authorization code is missing');
-    }
-
-    const user = await prisma.user.findUnique({
-        where: { telegramId: state },
-    });
-
-    if (!user) {
-        throw new ApiError(404, 'User not found');
-    }
-
-    try {
-        const tokenParams = {
-            code,
-            redirect_uri: `${BASE_API_URL}/api/v1/auth/microsoft/callback`,
-        };
-
-        const accessToken = await microsoftOAuthClient.getToken(tokenParams);
-
-        await prisma.integration.upsert({
-            where: {
-                userId_provider: {
-                    userId: user.id,
-                    provider: 'microsoft',
-                },
-            },
-            update: {
-                accessToken: accessToken.token.access_token,
-                refreshToken: accessToken.token.refresh_token,
-                expiresAt: new Date(accessToken.token.expires_at),
-            },
-            create: {
-                userId: user.id,
-                provider: 'microsoft',
-                accessToken: accessToken.token.access_token,
-                refreshToken: accessToken.token.refresh_token,
-                expiresAt: new Date(accessToken.token.expires_at),
-            },
-        });
-
-        return res.json(new ApiResponse(200, { message: 'Microsoft OAuth successful' }));
-    } catch (error) {
-        throw new ApiError(500, 'Failed to exchange authorization code for tokens', [error.message]);
-    }
-});
 
 export {
     getGoogleAuthUrl,
     getGithubAuthUrl,
-    getMicrosoftAuthUrl,
 
     googleCallback,
     githubCallback,
-    microsoftCallback
 }
