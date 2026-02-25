@@ -2,6 +2,7 @@ import { axiosInstance } from './lib/axios.js';
 import { logger, ApiError } from '../utils/index.js';
 import axios from 'axios';
 import { BASE_API_URL } from '../config/index.js';
+import generateAgentResponse from './lib/agent.js';
 
 const botApi = axiosInstance();
 
@@ -98,6 +99,22 @@ const handleConnectCommand = async (messageObj) => {
     }
 };
 
+const handleRegularMessage = async (messageObj) => {
+    const messageText = messageObj.text?.trim();
+    if(!messageText) {
+        return sendMessage(messageObj, 'I only understand text messages.');
+    }
+    logger.debug("message object: ",messageObj);
+
+    try {
+        const aiResponse = await generateAgentResponse(messageObj);
+        return sendMessage(messageObj, aiResponse);
+    } catch (error) {
+        logger.log('Error generating agent response:', error);
+        return sendMessage(messageObj, 'Sorry, something went wrong while processing your message.');
+    }
+};
+
 async function handleMessage(messageObj) {
     const messageText = messageObj.text?.trim();
     if (!messageText) {
@@ -126,10 +143,7 @@ async function handleMessage(messageObj) {
                 );
         }
     } else {
-        return sendMessage(
-            messageObj,
-            `LMAOO U SAID "${messageText}" WHAT A LOSER HAHAHAHAHA`,
-        );
+        return await handleRegularMessage(messageObj);
     }
 }
 
