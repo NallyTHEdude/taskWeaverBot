@@ -7,6 +7,8 @@ import {
     googleOAuthClient,
     githubOAuthClient,
 } from '../services/oauth.service.js';
+import { setupGithubWebhooks } from '../services/providers/githubProvider.service.js';
+import axios from 'axios';
 
 // ---------- OAuth Authorization URL Controllers ----------
 const getGoogleAuthUrl = asyncHandler(async (req, res) => {
@@ -125,75 +127,65 @@ const googleCallback = asyncHandler(async (req, res) => {
 const githubCallback = asyncHandler(async (req, res) => {
     const { code, state } = req.query;
 
-    if (!code) {
-        throw new ApiError(400, 'Authorization code is missing');
-    }
-
-    if (!state) {
-        throw new ApiError(400, 'State is missing');
-    }
+    if (!code) throw new ApiError(400, "Authorization code is missing");
+    if (!state) throw new ApiError(400, "State is missing");
 
     const parsedState = JSON.parse(state);
     const { telegramId } = parsedState;
 
-    logger.info('telegram id is:', telegramId);
-
     const user = await prisma.user.findUnique({
-        where: { telegramId },
+        where: { telegramId }
     });
 
-    if (!user) {
-        throw new ApiError(404, 'User not found');
-    }
+    if (!user) throw new ApiError(404, "User not found");
 
-    try {
-        const tokenParams = {
-            code,
-            redirect_uri: `${BASE_API_URL}/api/v1/auth/github/callback`,
-        };
+    //Exchanging code for token
+    const tokenResponse = await githubOAuthClient.getToken({
+        code,
+        redirect_uri: `${BASE_API_URL}/api/v1/auth/github/callback`
+    });
 
-        const accessToken = await githubOAuthClient.getToken(tokenParams);
+    const accessToken = tokenResponse.token.access_token;
 
-        await prisma.integration.upsert({
-            where: {
-                userId_provider: {
-                    userId: user.id,
-                    provider: IntegrationProvidersEnum.GITHUB,
-                },
-            },
-            update: {
-                accessToken: accessToken.token.access_token,
-                refreshToken: accessToken.token.refresh_token || null,
-                expiresAt: accessToken.token.expires_at
-                    ? new Date(accessToken.token.expires_at)
-                    : null,
-            },
-            create: {
+    //get GitHub user profile
+    const githubUserResponse = await axios.get(
+        "https://api.github.com/user",
+        {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                Accept: "application/vnd.github+json"
+            }
+        }
+    );
+
+    const githubUser = githubUserResponse.data;
+
+    //Store integrations table
+    const integration = await prisma.integration.upsert({
+        where: {
+            userId_provider: {
                 userId: user.id,
-                provider: IntegrationProvidersEnum.GITHUB,
-                accessToken: accessToken.token.access_token,
-                refreshToken: accessToken.token.refresh_token || null,
-                expiresAt: accessToken.token.expires_at
-                    ? new Date(accessToken.token.expires_at)
-                    : null,
-            },
-        });
+                provider: IntegrationProvidersEnum.GITHUB
+            }
+        },
+        update: {
+            accessToken,
+            providerAccountId: String(githubUser.id)
+        },
+        create: {
+            userId: user.id,
+            provider: IntegrationProvidersEnum.GITHUB,
+            providerAccountId: String(githubUser.id),
+            accessToken
+        }
+    });
 
-        return res.json(
-            new ApiResponse(200, { message: 'GitHub OAuth successful' }),
-        );
-    } catch (error) {
-        logger.error('Error exchanging GitHub authorization code for tokens', {
-            error: error.message,
-            stack: error.stack,
-        });
+    //Setup github webhooks for real time repo data 
+    await setupGithubWebhooks(integration);
 
-        throw new ApiError(
-            500,
-            'Failed to exchange authorization code for tokens',
-            [error.message],
-        );
-    }
+    return res.json(
+        new ApiResponse(200, { message: "GitHub OAuth successful" })
+    );
 });
 
 export { getGoogleAuthUrl, getGithubAuthUrl, googleCallback, githubCallback };
