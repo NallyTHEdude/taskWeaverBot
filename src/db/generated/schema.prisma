@@ -20,32 +20,34 @@ model User {
 }
 
 model Integration {
-  id           String    @id @default(uuid())
-  userId       String
-  provider     Provider
-  // providerUserId String
-  accessToken  String
-  refreshToken String?
-  expiresAt    DateTime?
-  createdAt    DateTime  @default(now())
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String    @id @default(uuid())
+  userId            String
+  provider          Provider
+  providerAccountId String
+  accessToken       String
+  refreshToken      String?
+  expiresAt         DateTime?
+  createdAt         DateTime  @default(now())
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, provider])
+  @@unique([provider, providerAccountId])
   @@index([userId])
   @@index([provider])
 }
 
 model Event {
-  id         String   @id @default(uuid())
+  id         String              @id @default(uuid())
   userId     String
   provider   Provider
-  eventType  String
+  eventType  PossibleEventTypes?
   externalId String
   occurredAt DateTime
   metadata   Json
-  createdAt  DateTime @default(now())
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime            @default(now())
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@unique([provider, externalId])
   @@index([userId])
   @@index([provider])
   @@index([occurredAt])
@@ -78,6 +80,7 @@ model RiskScore {
   @@index([createdAt])
 }
 
+// ---- Enums ----
 enum Provider {
   google
   microsoft
@@ -90,4 +93,17 @@ enum RiskLevel {
   LOW
   MODERATE
   HIGH
+}
+
+// ---- Providers Event types enums-----
+enum PossibleEventTypes {
+  // GITHUB
+  push
+  issue
+  pull_request
+  commit
+
+  //GOOGLE
+  calendar_event
+  email
 }
