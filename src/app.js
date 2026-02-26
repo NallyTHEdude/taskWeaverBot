@@ -25,11 +25,13 @@ import healthCheckRouter from './routes/healthCheck.routes.js';
 import oauth2Router from './routes/oauth.routes.js';
 import telegramRouter from './routes/telegram.routes.js';
 
+import githubProviderRouter from './routes/providers/githubProvider.routes.js';
+
 // routes
 app.use('/api/v1/health', healthCheckRouter);
 app.use('/api/v1/auth', oauth2Router);
+app.use('/api/v1/provider', githubProviderRouter);
 app.use('/', telegramRouter);
-
 app.get('/', (req, res) => {
     res.send('Welcome to Task Weaver API');
 });
