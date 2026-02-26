@@ -4,6 +4,9 @@ CREATE TYPE "Provider" AS ENUM ('google', 'microsoft', 'github', 'jira', 'slack'
 -- CreateEnum
 CREATE TYPE "RiskLevel" AS ENUM ('LOW', 'MODERATE', 'HIGH');
 
+-- CreateEnum
+CREATE TYPE "PossibleEventTypes" AS ENUM ('push', 'issue', 'pull_request', 'commit', 'calendar_event', 'email');
+
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
@@ -20,6 +23,7 @@ CREATE TABLE "Integration" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "provider" "Provider" NOT NULL,
+    "providerAccountId" TEXT NOT NULL,
     "accessToken" TEXT NOT NULL,
     "refreshToken" TEXT,
     "expiresAt" TIMESTAMP(3),
@@ -33,7 +37,7 @@ CREATE TABLE "Event" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "provider" "Provider" NOT NULL,
-    "eventType" TEXT NOT NULL,
+    "eventType" "PossibleEventTypes",
     "externalId" TEXT NOT NULL,
     "occurredAt" TIMESTAMP(3) NOT NULL,
     "metadata" JSONB NOT NULL,
@@ -80,6 +84,9 @@ CREATE INDEX "Integration_provider_idx" ON "Integration"("provider");
 CREATE UNIQUE INDEX "Integration_userId_provider_key" ON "Integration"("userId", "provider");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Integration_provider_providerAccountId_key" ON "Integration"("provider", "providerAccountId");
+
+-- CreateIndex
 CREATE INDEX "Event_userId_idx" ON "Event"("userId");
 
 -- CreateIndex
@@ -87,6 +94,9 @@ CREATE INDEX "Event_provider_idx" ON "Event"("provider");
 
 -- CreateIndex
 CREATE INDEX "Event_occurredAt_idx" ON "Event"("occurredAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Event_provider_externalId_key" ON "Event"("provider", "externalId");
 
 -- CreateIndex
 CREATE INDEX "FeatureSnapshot_userId_idx" ON "FeatureSnapshot"("userId");

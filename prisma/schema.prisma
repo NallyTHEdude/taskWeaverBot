@@ -23,7 +23,7 @@ model Integration {
   id             String    @id @default(uuid())
   userId         String
   provider       Provider
-  // providerUserId String
+  providerAccountId String
   accessToken    String
   refreshToken   String?
   expiresAt      DateTime?
@@ -33,13 +33,14 @@ model Integration {
   @@index([userId])
   @@index([provider])
   @@unique([userId, provider])
+  @@unique([provider, providerAccountId])
 }
 
 model Event {
   id         String   @id @default(uuid())
   userId     String
   provider   Provider
-  eventType  String
+  eventType  PossibleEventTypes?
   externalId String
   occurredAt DateTime
   metadata   Json
@@ -49,6 +50,7 @@ model Event {
   @@index([userId])
   @@index([provider])
   @@index([occurredAt])
+  @@unique([provider, externalId])
 }
 
 model FeatureSnapshot {
@@ -78,6 +80,8 @@ model RiskScore {
   @@index([createdAt])
 }
 
+
+// ---- Enums ----
 enum Provider {
   google
   microsoft
@@ -90,4 +94,17 @@ enum RiskLevel {
   LOW
   MODERATE
   HIGH
+}
+
+// ---- Providers Event types enums-----
+enum PossibleEventTypes {
+  // GITHUB
+  push
+  issue
+  pull_request
+  commit
+
+  //GOOGLE
+  calendar_event
+  email
 }
