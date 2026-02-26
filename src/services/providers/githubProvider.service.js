@@ -1,8 +1,11 @@
-import { prisma } from "../../db/index.js";
-import { GithubEventTypesEnum, IntegrationProvidersEnum } from "../../utils/constants.js";
-import axios from "axios";
-import { logger } from "../../utils/index.js";
-import { BASE_API_URL } from "../../config/index.js";
+import { prisma } from '../../db/index.js';
+import {
+    GithubEventTypesEnum,
+    IntegrationProvidersEnum,
+} from '../../utils/constants.js';
+import axios from 'axios';
+import { logger } from '../../utils/index.js';
+import { BASE_API_URL } from '../../config/index.js';
 
 const GITHUB = IntegrationProvidersEnum.GITHUB;
 
@@ -12,13 +15,13 @@ const PULL_REQUEST = GithubEventTypesEnum.PULL_REQUEST;
 
 async function getUserRepositories(accessToken) {
     const response = await axios.get(
-        "https://api.github.com/user/repos?per_page=100",
+        'https://api.github.com/user/repos?per_page=100',
         {
             headers: {
                 Authorization: `Bearer ${accessToken}`,
-                Accept: "application/vnd.github+json"
-            }
-        }
+                Accept: 'application/vnd.github+json',
+            },
+        },
     );
     return response.data;
 }
@@ -26,33 +29,29 @@ async function createWebhookForRepo(accessToken, owner, repo) {
     await axios.post(
         `https://api.github.com/repos/${owner}/${repo}/hooks`,
         {
-            name: "web",
+            name: 'web',
             active: true,
-            events: ["push", "issues", "pull_request"],
+            events: ['push', 'issues', 'pull_request'],
             config: {
                 url: `${BASE_API_URL}/api/v1/provider/github/webhook`,
-                content_type: "json",
-                secret: process.env.GITHUB_WEBHOOK_SECRET
-            }
+                content_type: 'json',
+                secret: process.env.GITHUB_WEBHOOK_SECRET,
+            },
         },
         {
             headers: {
                 Authorization: `Bearer ${accessToken}`,
-                Accept: "application/vnd.github+json"
-            }
-        }
+                Accept: 'application/vnd.github+json',
+            },
+        },
     );
 }
 
-
 const githubProviderService = {
-
     async handleEvent(eventType, payload, userId) {
-
         if (!userId) return;
 
         switch (eventType) {
-
             case PUSH:
                 return this.handlePush(payload, userId);
 
@@ -68,7 +67,6 @@ const githubProviderService = {
     },
 
     async handlePush(payload, userId) {
-
         const commitSha = payload.head_commit?.id;
         if (!commitSha) return;
 
@@ -76,8 +74,8 @@ const githubProviderService = {
             where: {
                 provider_externalId: {
                     provider: GITHUB,
-                    externalId: commitSha
-                }
+                    externalId: commitSha,
+                },
             },
             update: {},
             create: {
@@ -90,14 +88,13 @@ const githubProviderService = {
                     repo: payload.repository?.full_name,
                     branch: payload.ref,
                     message: payload.head_commit?.message,
-                    author: payload.head_commit?.author?.name
-                }
-            }
+                    author: payload.head_commit?.author?.name,
+                },
+            },
         });
     },
 
     async handleIssue(payload, userId) {
-
         const issueId = payload.issue?.id;
         if (!issueId) return;
 
@@ -105,8 +102,8 @@ const githubProviderService = {
             where: {
                 provider_externalId: {
                     provider: GITHUB,
-                    externalId: String(issueId)
-                }
+                    externalId: String(issueId),
+                },
             },
             update: {},
             create: {
@@ -119,14 +116,13 @@ const githubProviderService = {
                     repo: payload.repository?.full_name,
                     title: payload.issue?.title,
                     state: payload.issue?.state,
-                    author: payload.issue?.user?.login
-                }
-            }
+                    author: payload.issue?.user?.login,
+                },
+            },
         });
     },
 
     async handlePullRequest(payload, userId) {
-
         const prId = payload.pull_request?.id;
         if (!prId) return;
 
@@ -134,8 +130,8 @@ const githubProviderService = {
             where: {
                 provider_externalId: {
                     provider: GITHUB,
-                    externalId: String(prId)
-                }
+                    externalId: String(prId),
+                },
             },
             update: {},
             create: {
@@ -148,22 +144,20 @@ const githubProviderService = {
                     repo: payload.repository?.full_name,
                     title: payload.pull_request?.title,
                     state: payload.pull_request?.state,
-                    author: payload.pull_request?.user?.login
-                }
-            }
+                    author: payload.pull_request?.user?.login,
+                },
+            },
         });
-    }
-
+    },
 };
 
 async function setupGithubWebhooks(integration) {
-
     if (!integration || !integration.accessToken) return;
 
     const accessToken = integration.accessToken;
     const repos = await getUserRepositories(accessToken);
 
-    console.log("Repo:", repos.full_name);
+    console.log('Repo:', repos.full_name);
 
     for (const repo of repos) {
         console.debug(`repo: ${repo.full_name}`);
@@ -173,12 +167,15 @@ async function setupGithubWebhooks(integration) {
             await createWebhookForRepo(
                 accessToken,
                 repo.owner.login,
-                repo.name
+                repo.name,
             );
         } catch (error) {
             // Ignore 422 (already exists)
             if (error.response?.status !== 422) {
-                console.error("Webhook creation failed:", error.response?.data || error.message);
+                console.error(
+                    'Webhook creation failed:',
+                    error.response?.data || error.message,
+                );
             }
         }
     }

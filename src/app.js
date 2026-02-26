@@ -8,7 +8,7 @@ const app = express();
 // mounting webhook routes first
 import githubProviderRouter from './routes/providers/githubProvider.routes.js';
 
-// webhook routes 
+// webhook routes
 app.use('/api/v1/provider', githubProviderRouter);
 
 //basic app confiduration

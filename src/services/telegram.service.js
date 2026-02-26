@@ -101,17 +101,20 @@ const handleConnectCommand = async (messageObj) => {
 
 const handleRegularMessage = async (messageObj) => {
     const messageText = messageObj.text?.trim();
-    if(!messageText) {
+    if (!messageText) {
         return sendMessage(messageObj, 'I only understand text messages.');
     }
-    logger.debug("message object: ",messageObj);
+    logger.debug('message object: ', messageObj);
 
     try {
         const aiResponse = await generateAgentResponse(messageObj);
         return sendMessage(messageObj, aiResponse);
     } catch (error) {
         logger.log('Error generating agent response:', error);
-        return sendMessage(messageObj, 'Sorry, something went wrong while processing your message.');
+        return sendMessage(
+            messageObj,
+            'Sorry, something went wrong while processing your message.',
+        );
     }
 };
 

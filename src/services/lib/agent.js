@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 import { GROQ_LLM_API_KEY } from '../../config/index.js';
 import { logger, ApiError } from '../../utils/index.js';
-import {prisma} from '../../db/index.js';
+import { prisma } from '../../db/index.js';
 
 const openai = new OpenAI({
     apiKey: GROQ_LLM_API_KEY,
@@ -10,8 +10,7 @@ const openai = new OpenAI({
 
 const systemPrompt = {
     role: 'system',
-    content:
-        `you are poductivity assistant,Use tools when needed,No guessing,Reply from tool data if required,Confirm updates,Ask one short question if unclear,Max 50 tokens,Be naturally conversational,Keep responses short,human,If casual conversation,respond normally,If task-related,be precise,never invent tool arguments yourself`
+    content: `you are poductivity assistant,Use tools when needed,No guessing,Reply from tool data if required,Confirm updates,Ask one short question if unclear,Max 50 tokens,Be naturally conversational,Keep responses short,human,If casual conversation,respond normally,If task-related,be precise,never invent tool arguments yourself`,
 };
 
 const MODEL = 'qwen/qwen3-32b';
@@ -25,28 +24,27 @@ const tools = [
             parameters: {
                 type: 'object',
                 properties: {},
-                required: []
-            }
-        }
-    }
+                required: [],
+            },
+        },
+    },
 ];
-
 
 async function generateAgentResponse(messageObj) {
     try {
         const messageText = messageObj.text?.trim();
-        if(!messageText) {
+        if (!messageText) {
             return 'I only understand text messages.';
         }
         const formattedMessages = [
             {
-                role: "system",
-                content: `${systemPrompt.content}User's name is: ${messageObj.chat.username || "unknown"}`
+                role: 'system',
+                content: `${systemPrompt.content}User's name is: ${messageObj.chat.username || 'unknown'}`,
             },
             {
-                role: "user",
-                content: messageText
-            }
+                role: 'user',
+                content: messageText,
+            },
         ];
         // model decides if it needs to call tool or send message
         const firstResponse = await openai.chat.completions.create({
@@ -56,7 +54,7 @@ async function generateAgentResponse(messageObj) {
             messages: formattedMessages,
             // tools, // TODO: enable when TOOLS are created
             // tool_choice: 'auto', // TODO: enable when TOOLS are created
-            reasoning_effort: 'none'
+            reasoning_effort: 'none',
         });
 
         const message = firstResponse.choices[0].message;

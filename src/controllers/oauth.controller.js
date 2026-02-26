@@ -127,36 +127,33 @@ const googleCallback = asyncHandler(async (req, res) => {
 const githubCallback = asyncHandler(async (req, res) => {
     const { code, state } = req.query;
 
-    if (!code) throw new ApiError(400, "Authorization code is missing");
-    if (!state) throw new ApiError(400, "State is missing");
+    if (!code) throw new ApiError(400, 'Authorization code is missing');
+    if (!state) throw new ApiError(400, 'State is missing');
 
     const parsedState = JSON.parse(state);
     const { telegramId } = parsedState;
 
     const user = await prisma.user.findUnique({
-        where: { telegramId }
+        where: { telegramId },
     });
 
-    if (!user) throw new ApiError(404, "User not found");
+    if (!user) throw new ApiError(404, 'User not found');
 
     //Exchanging code for token
     const tokenResponse = await githubOAuthClient.getToken({
         code,
-        redirect_uri: `${BASE_API_URL}/api/v1/auth/github/callback`
+        redirect_uri: `${BASE_API_URL}/api/v1/auth/github/callback`,
     });
 
     const accessToken = tokenResponse.token.access_token;
 
     //get GitHub user profile
-    const githubUserResponse = await axios.get(
-        "https://api.github.com/user",
-        {
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-                Accept: "application/vnd.github+json"
-            }
-        }
-    );
+    const githubUserResponse = await axios.get('https://api.github.com/user', {
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+            Accept: 'application/vnd.github+json',
+        },
+    });
 
     const githubUser = githubUserResponse.data;
 
@@ -165,26 +162,26 @@ const githubCallback = asyncHandler(async (req, res) => {
         where: {
             userId_provider: {
                 userId: user.id,
-                provider: IntegrationProvidersEnum.GITHUB
-            }
+                provider: IntegrationProvidersEnum.GITHUB,
+            },
         },
         update: {
             accessToken,
-            providerAccountId: String(githubUser.id)
+            providerAccountId: String(githubUser.id),
         },
         create: {
             userId: user.id,
             provider: IntegrationProvidersEnum.GITHUB,
             providerAccountId: String(githubUser.id),
-            accessToken
-        }
+            accessToken,
+        },
     });
 
-    //Setup github webhooks for real time repo data 
+    //Setup github webhooks for real time repo data
     await setupGithubWebhooks(integration);
 
     return res.json(
-        new ApiResponse(200, { message: "GitHub OAuth successful" })
+        new ApiResponse(200, { message: 'GitHub OAuth successful' }),
     );
 });
 
