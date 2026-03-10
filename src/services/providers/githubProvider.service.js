@@ -13,6 +13,7 @@ const PUSH = GithubEventTypesEnum.PUSH;
 const ISSUES = GithubEventTypesEnum.ISSUES;
 const PULL_REQUEST = GithubEventTypesEnum.PULL_REQUEST;
 
+// GITHUB USES WEBHOOKS , SO WE NEED TO SETUP WEBHOOKS FOR EACH REPO THE USER WANTS TO INTEGRATE WITH
 async function getUserRepositories(accessToken) {
     const response = await axios.get(
         'https://api.github.com/user/repos?per_page=100',
@@ -170,7 +171,7 @@ async function setupGithubWebhooks(integration) {
                 repo.name,
             );
         } catch (error) {
-            // Ignore 422 (already exists)
+            // 422=>already exists
             if (error.response?.status !== 422) {
                 console.error(
                     'Webhook creation failed:',
